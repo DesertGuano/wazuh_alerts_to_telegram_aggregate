@@ -1,23 +1,30 @@
+# -*- coding: utf-8 -*-
+
 # README.md
 
-# Wazuh Alerts to Telegram (Aggregated Version with AbuseIPDB Integration)
+# 🚨 Wazuh Alerts to Telegram (Aggregated Version with AbuseIPDB Integration)
 
-## Overview
-This script receives alerts from Wazuh, formats them into structured HTML reports, and sends them to a Telegram chat.
-It also integrates with AbuseIPDB to enrich alerts that involve external IP addresses.
+## 📖 Overview
+This script collects alerts from **Wazuh**, formats them into structured **HTML reports**, and sends them to a **Telegram chat**.
+It also integrates with **AbuseIPDB** to enrich alerts involving external IP addresses, and generates a direct **ChatGPT** analysis link for every event.
 
-Originally developed by [Hasitha Upekshitha](https://medium.com/@hasithaupekshitha97/wazuh-alerts-to-telegram-fb9d15b2e544) and heavily modified for extended functionality.
+Originally developed by [Hasitha Upekshitha](https://medium.com/@hasithaupekshitha97/wazuh-alerts-to-telegram-fb9d15b2e544) and heavily modified by **Pavel Klaine** for extended functionality.
 
-## Features
-- Sends Wazuh alerts to Telegram.
-- Groups multiple events into a single message (aggregation).
-- Updates the message every 10 events.
-- Posts a milestone notification every 500 events.
-- Generates detailed HTML reports.
-- Performs AbuseIPDB lookups for external IPs.
-- Retry logic for Telegram API failures.
+---
 
-## Requirements
+## ✨ Features
+- 🚀 Sends Wazuh alerts directly to Telegram.
+- 📦 Groups multiple events into a single aggregated message.
+- 🔄 Updates the aggregation every 10 events.
+- 🎯 Posts milestone notifications every 500 events.
+- 📄 Generates structured HTML reports for each alert.
+- 🌍 Enriches external IP addresses via AbuseIPDB lookups.
+- 🔁 Implements retry logic for Telegram API failures.
+- 🤖 Creates ChatGPT prompt links for deeper event analysis.
+
+---
+
+## 🛠️ Requirements
 - Python 3.x
 - `requests` library
 
@@ -26,18 +33,22 @@ Install dependencies:
 pip install requests
 ```
 
-## Configuration
+---
+
+## ⚙️ Configuration
 - Replace `<Your Telegram Chat ID>` with your target chat ID.
 - Replace `<Your AbuseIPDB API Key>` with a valid AbuseIPDB API key.
-- When running the script, provide the correct Telegram Bot API Hook URL.
+- Provide the correct Telegram Bot API Hook URL when running the script.
 
-Example:
+Example usage:
 ```bash
 python3 wazuh_telegram_alerts.py /path/to/alert.json unused https://api.telegram.org/bot<your-bot-token>/sendMessage
 ```
 
-## Usage in Wazuh
-In your `ossec.conf`, configure the integration:
+---
+
+## 🔗 Usage in Wazuh
+Configure the integration inside your `ossec.conf`:
 ```xml
 <integration>
   <name>custom-telegram</name>
@@ -46,9 +57,12 @@ In your `ossec.conf`, configure the integration:
 </integration>
 ```
 
-## License
-This work is based on the original project by Hasitha Upekshitha. Please respect the original author's rights and link back to the original project if you distribute this code.
+---
+
+## 📜 License
+This work is based on the original project by **Hasitha Upekshitha**. 
+Please respect the original author's rights and provide appropriate credit if redistributing this code.
 
 ---
 
-Feel free to contribute or suggest improvements!
+## 🙌 Feel free to explore and use this project!
