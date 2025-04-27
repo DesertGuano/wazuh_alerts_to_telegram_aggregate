@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Wazuh Alerts to Telegram - Aggregated Version with AbuseIPDB Integration
 
@@ -89,7 +90,7 @@ def generate_html(agent, manager, rule_id, level, descr, loc, ts, data):
 body {{ background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 2rem; margin: 0; overflow-x: hidden; }}
 .container {{ width: 98%; background: #1e293b; padding: 16px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 82, 82, 0.2); overflow-x: auto; }}
 h1 {{ color: #f87171; font-size: 1.8rem; display: flex; align-items: center; }}
-h1::before {{ content: 'נ¨'; margin-right: 0.5rem; }}
+h1::before {{ content: '🚨'; margin-right: 0.5rem; }}
 .meta p {{ margin: 0.4rem 0; }}
 .inner-table {{ width: 100%; border-collapse: collapse; table-layout: auto; word-break: break-word; }}
 .inner-table th, .inner-table td {{ padding: 8px; border-top: 1px solid #334155; text-align: left; }}
@@ -195,7 +196,7 @@ def main():
     new_series = not entry or expired
 
     message = (
-        f"נ¨ *Wazuh Alert*\n\n"
+        f"🚨 *Wazuh Alert*\n\n"
         f"*Agent:* `{agent}`\n"
         f"*Manager:* `{manager}`\n"
         f"*Rule:* `{rule_id}` (Level: `{rule_level}`)\n"
@@ -207,13 +208,13 @@ def main():
 
     if new_series:
         if entry and entry['count'] >= AGG_MAX_COUNT:
-            summary = f"נ“ Aggregation complete for rule {rule_id}\nTotal: {entry['count']} events"
+            summary = f"📊 Aggregation complete for rule {rule_id}\nTotal: {entry['count']} events"
             tg_request(hook_url, {"chat_id": CHAT_ID, "text": summary, "parse_mode": "Markdown"})
 
         cache.pop(key, None)
 
         html_file = generate_html(agent, manager, rule_id, rule_level, rule_descr, location, timestamp, data_section)
-        caption = message + f"\n\nנ“ˆ Count: 1"
+        caption = message + f"\n\n📈 Count: 1"
         resp = tg_request(hook_url.replace("sendMessage", "sendDocument"),
                           {"chat_id": CHAT_ID, "caption": caption[:1020], "parse_mode": "Markdown"},
                           files={"document": open(html_file, 'rb')})
@@ -236,7 +237,7 @@ def main():
         save_cache(cache)
 
         if entry['count'] % 10 == 0:
-            new_caption = entry['message'] + f"\n\nנ“ˆ Count: {entry['count']}"
+            new_caption = entry['message'] + f"\n\n📈 Count: {entry['count']}"
             tg_request(hook_url.replace("sendMessage", "editMessageCaption"),
                        {"chat_id": CHAT_ID, "message_id": entry['msg_id'], "caption": new_caption[:1020], "parse_mode": "Markdown"})
             log(f"Updated caption after {entry['count']} events for {key}")
@@ -245,7 +246,7 @@ def main():
 
         if entry['count'] % 500 == 0:
             summary = (
-                f"נ“ Aggregation Milestone\n"
+                f"📊 Aggregation Milestone\n"
                 f"Rule: {rule_id}\n"
                 f"Current Count: {entry['count']} events\n"
                 f"Agent: {agent}\n"
@@ -264,6 +265,6 @@ if __name__ == '__main__':
         if len(sys.argv) > 3:
             requests.post(sys.argv[3], json={
                 "chat_id": CHAT_ID,
-                "text": f"ג *Script crashed!*\n```\n{error_trace[:3900]}\n```",
+                "text": f"❌ *Script crashed!*\n```\n{error_trace[:3900]}\n```",
                 "parse_mode": "Markdown"
             })
