@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # README.md
 
 # 🚨 Wazuh Alerts to Telegram (Aggregated Version with AbuseIPDB Integration)
