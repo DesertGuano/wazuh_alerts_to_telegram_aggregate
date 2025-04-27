@@ -82,7 +82,15 @@ def format_dict_as_table(d, level=0):
 
 def generate_html(agent, manager, rule_id, level, descr, loc, ts, data):
     parsed_table = format_dict_as_table(data)
-    prompt = f"Wazuh Alert\nAgent: {agent}\nManager: {manager}\nRule: {rule_id} (Level: {level})\nDescription: {descr}\nLocation: {loc}\nTimestamp: {ts}\nEvent data: {json.dumps(data, indent=2)}"
+    prompt = (
+    "Please analyze the following Wazuh security alert and explain the possible threat or incident it indicates:\n\n"
+    f"Agent: {agent}\n"
+    f"Manager: {manager}\n"
+    f"Rule: {rule_id} (Level: {level})\n"
+    f"Description: {descr}\n"
+    f"Location: {loc}\n"
+    f"Timestamp: {ts}\n"
+    f"Event data:\n{json.dumps(data, indent=2)}")
     gpt_url = f"https://chat.openai.com/?prompt={quote(prompt)}"
 
     html = f"""<html><head><meta charset='utf-8'><title>Wazuh Incident</title>
