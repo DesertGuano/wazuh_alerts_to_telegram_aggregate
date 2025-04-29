@@ -7,7 +7,7 @@ This script collects alerts from **Wazuh**, formats them into structured **HTML 
 It also integrates with **AbuseIPDB** to enrich alerts involving external IP addresses, and generates a direct **ChatGPT** analysis link for every event.
 
 Originally developed by [Hasitha Upekshitha](https://medium.com/@hasithaupekshitha97/wazuh-alerts-to-telegram-fb9d15b2e544) and heavily modified by **Pavel Klaine** for extended functionality.
-
+[Telegram Integration with Wazuh](https://github.com/Hasitha9796/Wazuh-Integrations/tree/1b7a26df448d5b2ab88aef97ec8b05569a9c660c/Telegram%20Integration%20with%20Wazuh)
 ---
 
 ## ✨ Features
