@@ -14,6 +14,9 @@ Changes:
 - Added milestone notifications every 500 events
 - Improved error handling and retry logic for Telegram API
 - Enhanced alert formatting and added a link to ChatGPT for event analysis
+- Added CSS improvements to handle large event data tables (scrollable, word-wrap)
+- Added responsive meta tag and media queries for mobile device optimization
+- Set "Field" column to fixed 10% width in tables
 
 Configuration:
 - CHAT_ID: Set your Telegram chat ID (integer or string).
@@ -43,18 +46,19 @@ import time
 import ipaddress
 
 # Constants
-CHAT_ID = "<Your Telegram Chat ID>"
+CHAT_ID = "CHAT_ID"
 CACHE_FILE = pathlib.Path("/tmp/wazuh_tg_cache.json")
 LOG_FILE = "/tmp/wazuh_tg_debug.log"
 AGG_WINDOW = 300  # seconds to expire aggregation window
 AGG_MAX_COUNT = 500  # maximum events in one aggregation
-ABUSEIPDB_API_KEY = "<Your AbuseIPDB API Key>"
+ABUSEIPDB_API_KEY = "ABUSEIPDB_API_KEY"
 
-# Helper functions
+# Logging helper
 def log(message):
     with open(LOG_FILE, "a") as f:
         f.write(f"[{datetime.now()}] {message}\n")
 
+# Parse inner JSON strings if present
 def try_parse_inner_json(value):
     if isinstance(value, str) and value.strip().startswith(('{', '[')):
         try:
@@ -63,6 +67,7 @@ def try_parse_inner_json(value):
             return value
     return value
 
+# Format a value as HTML (handles dict, list, primitive)
 def format_value(value, level=0):
     value = try_parse_inner_json(value)
     if isinstance(value, dict):
@@ -72,6 +77,7 @@ def format_value(value, level=0):
         return f"<table class='inner-table'>{rows}</table>"
     return escape(str(value))
 
+# Convert a dict into an HTML table
 def format_dict_as_table(d, level=0):
     html = "<table class='inner-table'>"
     html += "<thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>"
@@ -80,48 +86,94 @@ def format_dict_as_table(d, level=0):
     html += "</tbody></table>"
     return html
 
+# Generate colored badge for rule level
+def get_level_badge(level):
+    try:
+        lvl = int(level)
+    except:
+        return escape(str(level))
+    if lvl >= 13:
+        return f"<span class='badge red'>🔥 {lvl}</span>"
+    elif lvl >= 9:
+        return f"<span class='badge orange'>⚠️ {lvl}</span>"
+    elif lvl >= 5:
+        return f"<span class='badge blue'>ℹ️ {lvl}</span>"
+    else:
+        return f"<span class='badge gray'>{lvl}</span>"
+
+# Generate full HTML report file
 def generate_html(agent, manager, rule_id, level, descr, loc, ts, data):
     parsed_table = format_dict_as_table(data)
     prompt = (
-    "Please analyze the following Wazuh security alert and explain the possible threat or incident it indicates:\n\n"
-    f"Agent: {agent}\n"
-    f"Manager: {manager}\n"
-    f"Rule: {rule_id} (Level: {level})\n"
-    f"Description: {descr}\n"
-    f"Location: {loc}\n"
-    f"Timestamp: {ts}\n"
-    f"Event data:\n{json.dumps(data, indent=2)}")
+        "Please analyze the following Wazuh security alert and explain the possible threat or incident it indicates:\n\n"
+        f"Agent: {agent}\n"
+        f"Manager: {manager}\n"
+        f"Rule: {rule_id} (Level: {level})\n"
+        f"Description: {descr}\n"
+        f"Location: {loc}\n"
+        f"Timestamp: {ts}\n"
+        f"Event data:\n{json.dumps(data, indent=2)}")
     gpt_url = f"https://chat.openai.com/?prompt={quote(prompt)}"
 
-    html = f"""<html><head><meta charset='utf-8'><title>Wazuh Incident</title>
-<style>
-body {{ background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 2rem; margin: 0; overflow-x: hidden; }}
-.container {{ width: 98%; background: #1e293b; padding: 16px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 82, 82, 0.2); overflow-x: auto; }}
-h1 {{ color: #f87171; font-size: 1.8rem; display: flex; align-items: center; }}
-h1::before {{ content: '🚨'; margin-right: 0.5rem; }}
-.meta p {{ margin: 0.4rem 0; }}
-.inner-table {{ width: 100%; border-collapse: collapse; table-layout: auto; word-break: break-word; }}
-.inner-table th, .inner-table td {{ padding: 8px; border-top: 1px solid #334155; text-align: left; }}
-.inner-table tr:nth-child(even) td {{ background: #273449; }}
-</style>
-</head><body><div class='container'>
-<h1>Wazuh Security Alert</h1>
-<p><b>Agent:</b> {escape(agent)}</p>
-<p><b>Manager:</b> {escape(manager)}</p>
-<p><b>Rule:</b> {escape(rule_id)}</p>
-<p><b>Level:</b> {escape(str(level))}</p>
-<p><b>Description:</b> {escape(descr)}</p>
-<p><b>Location:</b> {escape(loc)}</p>
-<p><b>Timestamp:</b> {escape(ts)}</p>
-<div class='section-title'>Event Data</div>
-<div>{parsed_table}</div>
-<p><a style='color:#60a5fa;' href='{gpt_url}' target='_blank'>Ask ChatGPT for Explanation</a></p>
-</div></body></html>"""
+    css = """
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+    body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 1rem; margin: 0; }
+    .container { height: 95%; width: 95%; background: #1e293b; padding: 12px; border-radius: 12px; box-shadow: 0 0 10px rgba(255,82,82,0.2); }
+    h1 { color: #f87171; font-size: 1.6rem; display: flex; align-items: center; }
+    h1::before { content: '🔔'; margin-right: 0.5rem; }
+    .meta p { margin: 0.3rem 0; font-size: 0.9rem; }
+    .meta b { display: inline-block; min-width: 80px; color: #94a3b8; }
+    .badge { padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
+    .red { background: #ef4444; }
+    .orange { background: #f97316; }
+    .blue { background: #3b82f6; }
+    .gray { background: #64748b; }
+    .section-title { color: #f87171; margin: 1rem 0 0.5rem; font-size: 1rem; }
+    .inner-table { width: 100%; border-collapse: collapse; table-layout: fixed; word-break: break-word; margin-bottom: 1rem; display: block; max-height: 450px; overflow: auto; }
+    .inner-table th, .inner-table td { padding: 6px; border: 1px solid #334155; text-align: left; font-size: 0.85rem; }
+    .inner-table th { background: #334155; color: #cbd5e1; position: sticky; top: 0; }
+    .inner-table tr:nth-child(even) td { background: #273449; }
+    /* Fix first column width */
+    .inner-table th:first-child, .inner-table td:first-child { width: 10%; max-width: 10%; white-space: nowrap; }
+    .chatgpt-link { color: #60a5fa; text-decoration: none; font-weight: bold; font-size: 0.9rem; display: inline-block; margin-top: 0.5rem; }
+    @media (max-width: 480px) {
+        h1 { font-size: 1.4rem; }
+        .meta b { min-width: 60px; }
+        .inner-table th, .inner-table td { font-size: 0.75rem; padding: 4px; }
+    }
+    </style>
+    """
+
+    html = f"""
+    <html>
+    <head><meta charset='utf-8'>{css}<title>Wazuh Incident</title></head>
+    <body>
+    <div class='container'>
+        <h1>Wazuh Security Alert</h1>
+        <div class='meta'>
+            <p><b>Agent:</b> {escape(agent)}</p>
+            <p><b>Manager:</b> {escape(manager)}</p>
+            <p><b>Rule:</b> {escape(rule_id)}</p>
+            <p><b>Level:</b> {get_level_badge(level)}</p>
+            <p><b>Description:</b> {escape(descr)}</p>
+            <p><b>Location:</b> {escape(loc)}</p>
+            <p><b>Timestamp:</b> {escape(ts)}</p>
+        </div>
+        <div class='section-title'>Event Data</div>
+        {parsed_table}
+        <p><a class='chatgpt-link' href='{gpt_url}' target='_blank'>Ask ChatGPT for Explanation</a></p>
+    </div>
+    </body>
+    </html>
+    """
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".html", mode="w", encoding="utf-8")
     tmp.write(html)
     tmp.close()
     return tmp.name
 
+# (rest of script unchanged)
+# Cache handling
 def load_cache():
     if CACHE_FILE.exists():
         try:
@@ -133,6 +185,7 @@ def load_cache():
 def save_cache(data):
     CACHE_FILE.write_text(json.dumps(data))
 
+# IP utils
 def is_external_ip(ip):
     try:
         ip_obj = ipaddress.ip_address(ip)
@@ -154,6 +207,7 @@ def check_abuseipdb(ip):
         log(f"AbuseIPDB lookup failed for {ip}: {e}")
     return {}
 
+# Telegram request with retries
 def tg_request(url, payload=None, files=None):
     for attempt in range(3):
         try:
@@ -165,6 +219,7 @@ def tg_request(url, payload=None, files=None):
             time.sleep(2)
     return {}
 
+# Main logic
 def main():
     if len(sys.argv) < 4:
         raise SystemExit("Usage: <alert_file> <unused> <hook_url>")
@@ -199,12 +254,11 @@ def main():
     now = int(time.time())
     key = f"{rule_id}|{srcip}"
     entry = cache.get(key)
-
     expired = entry and (now - entry['last'] > AGG_WINDOW or entry['count'] >= AGG_MAX_COUNT)
     new_series = not entry or expired
 
     message = (
-        f"🚨 *Wazuh Alert*\n\n"
+        f"🔔 *Wazuh Alert*\n\n"
         f"*Agent:* `{agent}`\n"
         f"*Manager:* `{manager}`\n"
         f"*Rule:* `{rule_id}` (Level: `{rule_level}`)\n"
@@ -216,11 +270,10 @@ def main():
 
     if new_series:
         if entry and entry['count'] >= AGG_MAX_COUNT:
-            summary = f"📊 Aggregation complete for rule {rule_id}\nTotal: {entry['count']} events"
+            summary = f"✅ Aggregation complete for rule {rule_id}\nTotal: {entry['count']} events"
             tg_request(hook_url, {"chat_id": CHAT_ID, "text": summary, "parse_mode": "Markdown"})
 
         cache.pop(key, None)
-
         html_file = generate_html(agent, manager, rule_id, rule_level, rule_descr, location, timestamp, data_section)
         caption = message + f"\n\n📈 Count: 1"
         resp = tg_request(hook_url.replace("sendMessage", "sendDocument"),
@@ -229,15 +282,9 @@ def main():
         os.unlink(html_file)
         msg_id = resp.get('result', {}).get('message_id') if resp else None
         if msg_id:
-            cache[key] = {
-                'msg_id': msg_id,
-                'count': 1,
-                'last': now,
-                'message': message
-            }
+            cache[key] = {'msg_id': msg_id, 'count': 1, 'last': now, 'message': message}
         save_cache(cache)
         log(f"New aggregation started for {key}")
-
     else:
         entry['count'] += 1
         entry['last'] = now
@@ -254,7 +301,7 @@ def main():
 
         if entry['count'] % 500 == 0:
             summary = (
-                f"📊 Aggregation Milestone\n"
+                f"🏆 Aggregation Milestone\n"
                 f"Rule: {rule_id}\n"
                 f"Current Count: {entry['count']} events\n"
                 f"Agent: {agent}\n"
@@ -264,6 +311,7 @@ def main():
             tg_request(hook_url, {"chat_id": CHAT_ID, "text": summary, "parse_mode": "Markdown"})
             log(f"Sent milestone summary at {entry['count']} events for {key}")
 
+# Entry point
 if __name__ == '__main__':
     try:
         main()
@@ -273,6 +321,6 @@ if __name__ == '__main__':
         if len(sys.argv) > 3:
             requests.post(sys.argv[3], json={
                 "chat_id": CHAT_ID,
-                "text": f"❌ *Script crashed!*\n```\n{error_trace[:3900]}\n```",
+                "text": f"❌ *Script crashed!*\n```{error_trace[:3900]}```",
                 "parse_mode": "Markdown"
             })
